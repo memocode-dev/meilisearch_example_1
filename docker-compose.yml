@@ -1,0 +1,35 @@
+version: '3.1'
+
+services:
+  mysql:
+    container_name: test-container-mysql
+    image: mysql:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_DATABASE: test
+    ports:
+      - "12000:3306"
+    volumes:
+      - ./mysql/movies.sql:/docker-entrypoint-initdb.d/init.sql
+
+  meilisearch:
+    container_name: test-container-meilisearch
+    image: getmeili/meilisearch:v1.7
+    environment:
+      - http_proxy
+      - https_proxy
+      - MEILI_MASTER_KEY=${MEILI_MASTER_KEY:-masterKey}
+      - MEILI_NO_ANALYTICS=${MEILI_NO_ANALYTICS:-true}
+      - MEILI_ENV=${MEILI_ENV:-development}
+      - MEILI_LOG_LEVEL
+      - MEILI_DB_PATH=${MEILI_DB_PATH:-./data.ms}
+    ports:
+      - "12001:7700"
+  logstash:
+    container_name: test-container-logstash
+    image: docker.elastic.co/logstash/logstash:8.12.2
+    volumes:
+      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro,z
+      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro,z
+      - ./logstash/drivers/:/opt/logstash/vendor/jar/jdbc/
+    restart: unless-stopped

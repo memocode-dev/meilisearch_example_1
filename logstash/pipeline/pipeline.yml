@@ -1,0 +1,32 @@
+input {
+  jdbc {
+    jdbc_driver_library => "/opt/logstash/vendor/jar/jdbc/mysql-connector-j-8.3.0.jar"
+    jdbc_driver_class => "com.mysql.cj.jdbc.Driver"
+    jdbc_connection_string => "jdbc:mysql://test-container-mysql:3306/test"
+    jdbc_user => "root"
+    jdbc_password => "1234"
+    jdbc_paging_enabled => true
+		jdbc_paging_mode => "explicit"
+		jdbc_page_size => 10000
+		jdbc_validate_connection => true
+    tracking_column => "last_updated"
+    use_column_value => true
+		tracking_column_type => "timestamp"
+    last_run_metadata_path => "/usr/share/logstash/.logstash_jdbc_last_run_1"
+    schedule => "* * * * *"
+		statement => "SELECT * FROM posts LIMIT :size OFFSET :offset"
+    type => "test"
+  }
+}
+
+output {
+  http {
+    url => "http://test-container-meilisearch:7700/indexes/posts/documents?primaryKey=id"
+    http_method => "post"
+    format => "json"
+    headers => {
+      "Content-Type" => "application/json"
+      "Authorization" => "Bearer masterKey"
+    }
+  }
+}
